@@ -1,58 +1,78 @@
 # Interactive_music-playing_zone
 ## Table of Contents
 - [Introduction](#introduction)
+- [Key Responsibilities](#key-responsibilities)
 - [Getting Started](#getting-started)
-- [Bug Solving Records](#bug-solving-records)
-
+- [Bug Records](#bug-records)
+- [Lessons Learned](#lessons-learned)
 ## Introduction
-This project is a task management application where you can create, view your todos and update their status as time goes by. 
-- The "create task" button is disabled before all the fields are filled.
-- Diverse colors are applied at task counters and task borders to manifest different status and priorities of tasks
-- At the bottom of each listed task, there are a switch and a button to update task status to in progress and completed respectively
+This application is a palace for gathering  people with the same music taste online
+
+Host is able to
+- decide if the guests can pasue the song and how many votes needed to skip it while creating
+- pass the authentication through login to Spotify, before the information of current song will be shown and constantly updating on the page.
+- Have the full access of the room, including pausing, skiping the song and updating room pemissions.
+- The room will be gone after host exit.
   
-- And the change of creating and updating will be simultaneously synchronized in the task counters and list, which is achieved by React Context hook, allowing values to be passed into different layers of nested components, with no need to pass them layer by layer, working like a global variable.
-- Express Validator was utilized to ensure the submitted request data conforms to expected formats and content, thereby improving the application's security and reliability.
+Guests are able to 
+- Join the room by sending 6-digit random code.
+- Pause current song if allowed by host
+- skip the song by voting
+- alway be redirected back to room through home page before leaving the room
 ### Technical Structure
 Django + Django Rest Framework + ReactJS
 ### Player Interface Display
 <img width="1002" alt="截屏2024-07-13 00 28 14" src="https://github.com/user-attachments/assets/65cd7009-0510-4a42-8d91-7661a3680215">
 
 
-
-
+## Key Responsibilities
+- vv
+- 
 
 ## Getting Started
 ### Clone
 ```bash
-git clone https://github.com/SiMinus/todo-ts.git
+git clone https://github.com/SiMinus/Interactive_music-playing_zone.git
 ```
 
-### Setting up for todo-api(back end)
+### Setting up for backend
 ```bash
-cd todo-api
+cd Interactive_music-playing_zone
+```
+Create new virtual environment
+
+```bash
+python -m venv venv  # second 'venv' can be modified to the name you like for the directory
+source venv/bin/activate  # activate virtual environment(Linux & MacOS)
+.\venv\Scripts\activate  # （Only for Windows）
+
+```
+Install required dependencies for this app
+```bash
+pip install -r requirements.txt
+```
+Database Migration
+```bash
+python manage.py migrate
+```
+
+### Setting up for frontend
+```bash
+cd frontend
 npm install
 ```
-Make sure you have a MYSQL server set and running on your machine, in which you will create a database called todo
-
-Configure .env file
-```bash
-PORT=<port number to be listened>
-MYSQL_USER=root
-MYSQL_PASSWORD=<your password>
-MYSQL_DB=todo
-
-```
-Since the Entity was already created, the table will be automatically created due to the features of TypeORM after running:
+Start Webpack and watch for file changes to compile in real-time.
 ```bash
 npm run dev
 ```
-### Setting up for todo-front(front end)
+### Finally, starting development server at http://127.0.0.1:8000/
 ```bash
-cd todo-front
-npm install
+python manage.py runserver
 ```
-Compiled successfully!
+### All set! Now You can now browse the music zone and share music with you friends !
 
-You can now view todo-app in the browser.
-### All set! Now you can go and create your first todo!
-## Bug Solving Records
+## Bug Records
+### Solved Bugs
+### Existing problems to be solved soon
+
+## Lessons Learned
