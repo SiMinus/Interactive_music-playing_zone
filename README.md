@@ -9,22 +9,23 @@
 This application is a palace for gathering  people with the same music taste online
 
 Host is able to
-- decide if the guests can pasue the song and how many votes needed to skip it while creating
-- pass the authentication through login to Spotify, before the information of current song will be shown and constantly updating on the page.
+- Decide if the guests can pasue the song and how many votes needed to skip it while creating
+- Pass the authentication through login to Spotify, before the information of current song will be shown and constantly updating on the page.
 - Have the full access of the room, including pausing, skiping the song and updating room pemissions.
 - The room will be gone after host exit.
   
 Guests are able to 
 - Join the room by sending 6-digit random code.
 - Pause current song if allowed by host
-- skip the song by voting
-- alway be redirected back to room through home page before leaving the room
+- Skip the song by voting
+- Alway be redirected back to room through home page before leaving the room
 ### Technical Structure
 Django + Django Rest Framework + ReactJS
 ### Player Interface Display
 <img width="1002" alt="截屏2024-07-13 00 28 14" src="https://github.com/user-attachments/assets/65cd7009-0510-4a42-8d91-7661a3680215">
 
-
+### Development WorkFlow
+https://github.com/SiMinus/Music_Workflow
 ## Key Responsibilities
 - vv
 - 
@@ -73,6 +74,7 @@ python manage.py runserver
 
 ## Bug Records
 ### Solved Bugs
+### Refinements made
 ### Existing problems to be solved soon
 
 ## Lessons Learned
