@@ -81,3 +81,4 @@ python manage.py runserver
 ### Existing problems to be solved soon
 
 ## Lessons Learned
+- When a component serves as the root of a routing structure, it remains mounted and active even when its child routes are directly accessed. The root component's state values can be modified in response to user interactions or API calling. However, when a user returns to this root route through programmatic navigation (e.g., using the navigate function), the root component does not remount or reinitialize. Instead, it retains its last known state rather than resetting to its initial values.
