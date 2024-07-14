@@ -96,36 +96,36 @@ Bug faced: If a host visit the home page after create a room, of course now he i
 Solution:
 
 ```bash
-    //create "clearCode" function in Home page and send it as prop to Room page
-    <Route
-        path="/room/:roomCode"
-        element={<Room leaveRoomCallback={clearRoomCode} />} 
-    />
+//create "clearCode" function in Home page and send it as prop to Room page
+<Route
+    path="/room/:roomCode"
+    element={<Room leaveRoomCallback={clearRoomCode} />} 
+/>
 
-    const leaveRoomButton = () => {
-        const requestOptions = {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-        }
-        fetch("/api/leave-room", requestOptions)
-          .then((response) => {
-       //to be called every time the "leave room" button is pressed.
-            props.leaveRoomCallback();
-            navigate('/');
-          })
+const leaveRoomButton = () => {
+    const requestOptions = {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
     }
+    fetch("/api/leave-room", requestOptions)
+      .then((response) => {
+   //to be called every time the "leave room" button is pressed.
+        props.leaveRoomCallback();
+        navigate('/');
+      })
+}
 ```
 ```bash
-    fetch("/api/get-room" + "?code=" + roomCode)
-      .then((response) => {
-        if(!response.ok){
-        //clean the existed roomCode if getting unexpected response.
-            props.leaveRoomCallback();
-        //redirect to Home page if the code doestn't exist.
-            navigate('/');
-        }
-        return response.json()
-      })
+fetch("/api/get-room" + "?code=" + roomCode)
+  .then((response) => {
+    if(!response.ok){
+    //clean the existed roomCode if getting unexpected response.
+        props.leaveRoomCallback();
+    //redirect to Home page if the code doestn't exist.
+        navigate('/');
+    }
+    return response.json()
+  })
 ```
 Fixed Results: users can be redirected to home page every time they press "leave room" button.
 
@@ -134,52 +134,123 @@ Bug faced: After host clicked the Update Button, new changes were not shown on t
 Solution:
 
 ```bash
-  const requestOptions = {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-              // votesToSkip and guestCanPause exist both in state and props.
-              // React will assume you are using props without declaration
-                  votes_to_skip: state.votesToSkip,
-                  guest_can_pause: state.guestCanPause,
-                  code: roomCode
-              })
-          }
+const requestOptions = {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+        // votesToSkip and guestCanPause exist both in state and props.
+        // React will assume you are using props without declaration
+            votes_to_skip: state.votesToSkip,
+            guest_can_pause: state.guestCanPause,
+            code: roomCode
+        })
+}
 ```
-Fixed Results: After updating, host will be redirected to Room page with new changes in the Room page
 
 3.<br>
 Bug faced: UseNavigete Hook cannot get host from back to the Room Page
 Solution:
 
 ```bash
-    const handleUpdateButton = () => {
-            ......
-            if (response.ok) {
-                setMessage('Updated Successfully')
-                props.updateCallback();
-             // even though UpdateRoom component was rendered by changing the value of state: showSetting to be true
-             // But there is no changing on Route, so set the value back to false using callback functions was a much better option
-                setTimeout(() => {
-                    props.redirectCallback();
-                }, 2000);
+const handleUpdateButton = () => {
+        ......
+        if (response.ok) {
+            setMessage('Updated Successfully')
+            props.updateCallback();
+         // even though UpdateRoom component was rendered by changing the value of state: showSetting to be true
+         // But there is no changing on Route, so set the value back to false using callback functions was a much better option
+            setTimeout(() => {
+                props.redirectCallback();
+            }, 2000);
 
-                // setTimeout(() => {
-                //     navigate(`/room/${data.code}`);
-                // }, 2000);
+            // setTimeout(() => {
+            //     navigate(`/room/${data.code}`);
+            // }, 2000);
 
-            }
-           ......
-    }
+        }
+       ......
+}
 ```
-Fixed Results:
-3.<br>
-Bug faced: 
-
+4.<br>
+Bug faced: I wanted to get the same Response message in frontend as it from backend to better specify the issue, but got reporting error: ReferenceError: response is not defined
+```bash
+fetch("/api/update-room", requestOptions)
+  .then((response) => response.json())
+  .then((data) = > {
+      if (response.ok) {
+          setMessage('Updated Successfully')
+          props.updateCallback();
+          setTimeout(() => {
+              props.redirectCallback();
+          }, 2000);
+      } else {
+          setError(true);
+          setMessage(data.msg)
+      }
+});
+```
 Solution:
 
 ```bash
+  // since the response from last then() can not be accessed,
+  // a better option would be using async&await
+const handleUpdateButton = async () => {
+    const requestOptions = {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            votes_to_skip: state.votesToSkip,
+            guest_can_pause: state.guestCanPause,
+            code: roomCode
+        })
+    }
 
+    try {
+        const response = await fetch("/api/update-room", requestOptions)
+        const data = await response.json()
+
+        if (response.ok) {
+            setMessage('Updated Successfully')
+            props.updateCallback();
+            setTimeout(() => {
+                props.redirectCallback();
+            }, 2000);
+        } else {
+            setError(true);
+            setMessage(data.msg)
+        }
+    }
+    catch(error) {
+        console.error('Error: ', error)
+        setError(true)
+        setMessage('Unknown Error')
+    }
+}      
+```
+
+5.<br>
+Bug faced: After getting tokens from Spotify API, host cannot be navigated back to this application.
+Solution:
+
+```bash
+// give the url name property to be detected
+// frontend/urls.py
+urlpatterns = [
+    path('', views.index, name=''),
+    ......
+]
+// spotify/views.py
+def spotify_callback(request, format=None):
+    ......
+    return redirect('frontend:')
+```
+6.<br>
+Bug faced: The refresh_token got from Spotify API is None. And NULL is not allowed in the Database setting
+Solution:
+
+```bash
+// Sometimes there is no new token return from spotify. Using old one is still fine
+refresh_token = response.get('refresh_token') or refresh_token
 ```
 Fixed Results:
 ### Refinements made
@@ -187,19 +258,88 @@ Fixed Results:
 desired functionality: user can directly access to the Room Page through url address, doesn't have to go through joining routine.<br>
 Solution:  
 ```bash
-    //add code to session in GetRoom View
-    code = request.GET.get(self.lookup_url_kwarg)
-    self.request.session['room_code'] = code
+//add code to session in GetRoom View
+code = request.GET.get(self.lookup_url_kwarg)
+self.request.session['room_code'] = code
 ```
 2.<br>
-desired functionality: user can directly access to the Room Page through url address, doesn't have to go through joining routine.<br>
-Solution:  
+desired functionality: reduce the code duplication on UpdateRoom.<br>
+Before:  
 ```bash
-    //add code to session in GetRoom View
-    code = request.GET.get(self.lookup_url_kwarg)
-    self.request.session['room_code'] = code
-```
+const renderCreateButtons = () => {
+  return (
+    <Grid container spacing={1}>
+      <Grid item xs={12} align="center">
+        <Button
+          color="primary"
+          variant="contained"
+          onClick={handleCreateButton}
+        >
+          Create A Room
+        </Button>
+      </Grid>
+      <Grid item xs={12} align="center">
+        <Button color="secondary" variant="contained" to="/" component={Link}>
+          Back
+        </Button>
+      </Grid>
+    </Grid>
+  );
+}
 
+const renderUpdateButtons = () => {
+  return (
+    <Grid item xs={12} align="center">
+      <Button
+        color="primary"
+        variant="contained"
+        onClick={handleUpdateButton}
+      >
+        Update Room
+      </Button>
+    </Grid>
+  );
+}
+......
+{update ? renderUpdateButtons() : renderCreateButtons()}
+```
+After:  
+```bash
+const title = update ? 'Update Room' : 'Create a Room'
+<Button
+    color="primary"
+    variant="contained"
+    onClick={update ? handleUpdateButton : handleCreateButton}
+>
+    {title}
+</Button>
+```
+Becasue Buttons in 2 situations are almost the same. So I changed it from render 2 kinds of button depending on update state to calling 2 kinds of functions depending on update state
+
+3.
+desired functionality: after updating, new room info can be shown with refreshing.<br>
+Solution:
+
+```bash
+// if updating is successful, getRoomDetails function will be called again through sent props
+// Room.js
+<Grid item xs={12} align="center">
+    <CreateRoomPage
+        ......
+        updateCallback={getRoomDetails}
+        redirectCallback={() => setShowSettings(false)}
+    />
+</Grid>    
+......
+// CreateRoomPage.js
+if (response.ok) {
+    setMessage('Updated Successfully')
+    props.updateCallback();
+    setTimeout(() => {
+        props.redirectCallback();
+    }, 2000);
+} 
+```
 ## Lessons Learned
 - When a component serves as the root of a routing structure, it remains mounted and active even when its child routes are directly accessed. The root component's state values can be modified in response to user interactions or API calling.
 - However, when a user returns to this root route through programmatic navigation (e.g., using the navigate function), the root component does not remount or reinitialize. Instead, it retains its last known state rather than resetting to its initial values.
