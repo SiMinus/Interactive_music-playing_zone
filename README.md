@@ -77,8 +77,63 @@ python manage.py runserver
 
 ## Bug Records
 ### Solved Bugs
+1.
+```
+Given situation: users, having joined, will be redirected to the room page every time they get back through main page<br>
+Bug faced: If a host visit the home page after create a room, of course now he is in this room through 2 tabs. After this host leave room in one tab, in the other tab:
+- if he refreshed, there will be reporting error, because the room doesn't exist anymore
+- if he press "leave room" button again, he will go to the home page at the first place, but since the value of state roomCode still exist, he willcbe redirected to the nonexistent room page again. Certainly, it will be reporting error as well.
+
+Solution:
+
+```bash
+    //create "clearCode" function in Home page and send it as prop to Room page
+    <Route
+        path="/room/:roomCode"
+        element={<Room leaveRoomCallback={clearRoomCode} />} 
+    />
+
+    const leaveRoomButton = () => {
+        const requestOptions = {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+        }
+        fetch("/api/leave-room", requestOptions)
+          .then((response) => {
+       //to be called every time the "leave room" button is pressed.
+            props.leaveRoomCallback();
+            navigate('/');
+          })
+    }
+```
+```bash
+    fetch("/api/get-room" + "?code=" + roomCode)
+      .then((response) => {
+        if(!response.ok){
+        //clean the existed roomCode if getting unexpected response.
+            props.leaveRoomCallback();
+        //redirect to Home page if the code doestn't exist.
+            navigate('/');
+        }
+        return response.json()
+      })
+```
+Fixed Results: users can be redirected to home page every time they press "leave room" button.
+2.
+
 ### Refinements made
+1.
+desired functionality: user can directly access to the Room Page through url address, doesn't have to go through joining routine.
+Solution:  
+```bash
+    //add code to session in GetRoom View
+    code = request.GET.get(self.lookup_url_kwarg)
+    self.request.session['room_code'] = code
+```
 ### Existing problems to be solved soon
 
 ## Lessons Learned
-- When a component serves as the root of a routing structure, it remains mounted and active even when its child routes are directly accessed. The root component's state values can be modified in response to user interactions or API calling. However, when a user returns to this root route through programmatic navigation (e.g., using the navigate function), the root component does not remount or reinitialize. Instead, it retains its last known state rather than resetting to its initial values.
+- When a component serves as the root of a routing structure, it remains mounted and active even when its child routes are directly accessed. The root component's state values can be modified in response to user interactions or API calling.
+- However, when a user returns to this root route through programmatic navigation (e.g., using the navigate function), the root component does not remount or reinitialize. Instead, it retains its last known state rather than resetting to its initial values.
+
+bjjjjjjjjjjj
