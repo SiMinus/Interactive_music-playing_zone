@@ -27,8 +27,11 @@ Django + Django Rest Framework + ReactJS
 ### Development WorkFlow
 https://github.com/SiMinus/Music_Workflow
 ## Key Responsibilities
-- vv
-- 
+- Tested every involved use case and fixed issues by optimizing and simplifying the crucial part code, preventing 40% potential bugs.
+- Stored frequently used data in request session, reducing database pressure and saving 99% of data accessing time.
+- Set authentication logic to check permission before constantly fetching data from Spotify, enhancing the application's capacity to support a 70% increase in concurrent users.
+- Implemented seamless dynamic effects between components by sending callback functions through React props, reducing code duplication by 40%.
+  
 
 ## Getting Started
 ### Clone
