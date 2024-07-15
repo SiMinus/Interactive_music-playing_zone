@@ -148,7 +148,7 @@ const requestOptions = {
 ```
 
 3.<br>
-Bug faced: UseNavigete Hook cannot get host from back to the Room Page
+Bug faced: UseNavigete Hook cannot get host from back to the Room Page<br>
 Solution:
 
 ```bash
@@ -230,6 +230,7 @@ const handleUpdateButton = async () => {
 
 5.<br>
 Bug faced: After getting tokens from Spotify API, host cannot be navigated back to this application.
+
 Solution:
 
 ```bash
@@ -246,13 +247,44 @@ def spotify_callback(request, format=None):
 ```
 6.<br>
 Bug faced: The refresh_token got from Spotify API is None. And NULL is not allowed in the Database setting
+
 Solution:
 
 ```bash
 // Sometimes there is no new token return from spotify. Using old one is still fine
 refresh_token = response.get('refresh_token') or refresh_token
 ```
-Fixed Results:
+7.<br>
+Bug faced: getCurrentSong was successfully called, but response data wasn't sent to state song.
+
+Solution:
+```bash
+const isMounted = useRef(true)
+useEffect(() => {
+    getRoomDetails();
+    const abortController = new AbortController();
+
+    let interval;
+    if (spotifyChecked){
+ // Even though the default value of isMounted was already set to be true
+ // But the second time of useEffect being called because of being authenticated will close the interval
+ // and set isMounted to be false
+ // so we need to make isMounted to be true again evert time host get authenticated successfully
+        isMounted.current = true
+        interval = setInterval(getCurrentSong, 1000)
+    }
+    return () => {
+        isMounted.current = false
+        if (interval) {
+            clearInterval(interval)
+        }
+        abortController.abort()
+    }
+    
+    
+}, [spotifyChecked])
+```
+Why using useRef: Even if the interval is cleared, fetch requests that have already been started may still try to update the state of the uninstalled component, which can lead to errors or memory leaks
 ### Refinements made
 1.<br>
 desired functionality: user can directly access to the Room Page through url address, doesn't have to go through joining routine.<br>
@@ -340,8 +372,96 @@ if (response.ok) {
     }, 2000);
 } 
 ```
+4. <br>
+desired functionality: Host should be checked first before before constly getting song info from Spotify API. And interval will be cleared every time host leave room<br>
+Before:
+```bash
+useEffect(() => {
+  getRoomDetails();
+  const interval = setInterval(getCurrentSong, 1000)
+  return () => clearInterval(interval)
+}
+```
+After: 
+```bash
+const isMounted = useRef(true)
+......
+useEffect(() => {
+    getRoomDetails();
+    const abortController = new AbortController();
+
+    let interval;
+    // getCurrentSong will be called only if
+    // the result from authSpotify is true
+    if (spotifyChecked){
+        isMounted.current = true
+        interval = setInterval(getCurrentSong, 1000)
+    }
+   // when this component was uninstalled or closed, useEffect will be called, setting isMounted to be false
+   // to stop getCurrentSong calling and clear interval
+    return () => {
+        isMounted.current = false
+        if (interval) {
+            clearInterval(interval)
+        }
+        abortController.abort()
+    }
+    
+    
+}, [spotifyChecked])
+......
+const getCurrentSong = () => {
+    fetch("/spotify/current-song")
+      .then((response) => {
+        if (!response.ok) {
+            return {}
+        } 
+        return response.json()
+      })
+      .then((data) => {
+      // set data to song only if this component is being mounted.
+        if (isMounted.current) {
+          setSong(data)
+          console.log(data)  
+        }
+      })
+}
+```
+5. <br>
+Desired functionality: Authentication is only for host, guests can freely access to the room with updating music info after host successfully being checked<br>
+Before:
+```bash
+class IsAuthenticated(APIView):
+    def get(self, request, format=None):
+        is_authenticated = is_spotify_authenticated(
+            self.request.session.session_key)
+        return Response({'status': is_authenticated}, status=status.HTTP_200_OK)
+```
+After:
+```bash
+class IsAuthenticated(APIView):
+    def get(self, request, format=None):
+        room_code = self.request.session.get('room_code')
+        room = Room.objects.get(code=room_code)
+        if self.request.session.session_key == room.host:
+            is_authenticated = is_spotify_authenticated(self.request.session.session_key)
+            return Response({'status': is_authenticated}, status=status.HTTP_200_OK)
+        
+        return Response({'status': True}, status=status.HTTP_200_OK)
+```
 ## Lessons Learned
+1.
 - When a component serves as the root of a routing structure, it remains mounted and active even when its child routes are directly accessed. The root component's state values can be modified in response to user interactions or API calling.
 - However, when a user returns to this root route through programmatic navigation (e.g., using the navigate function), the root component does not remount or reinitialize. Instead, it retains its last known state rather than resetting to its initial values.
 
-bjjjjjjjjjjj
+2.
+- if state was set to null by default, then it can't be render within the page before being declared a value.
+Solution:
+```bash
+const [song, setSong] = useState(null)
+{song ? <MusicPlayer song={song} /> : null}
+```
+3. Difference between useState and useRef
+- for managing component visibility, input values, etc.: _state_ is better becasue of triggering re-rendering but _ref_ can't
+- for accessing DOM elements: _ref_ provides direct references to DOM nodes, allowing you to manipulate the DOM directly without triggering a re-rendering of the component, which can improve performance when dealing with frequently updated scenes.
+   
